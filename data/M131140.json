@@ -1,0 +1,175 @@
+{
+  "company_code": "M131140",
+  "company_name": "Република Македонија",
+  "history": [
+    {
+      "date": "2025-12-09",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-12-05",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-12-04",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-12-03",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-12-02",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-12-01",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-28",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-27",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-26",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-25",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-24",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-21",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-20",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-19",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    },
+    {
+      "date": "2025-11-18",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0.0,
+      "turnover_best_mkd": 0.0,
+      "total_turnover_mkd": 0.0
+    }
+  ],
+  "first_trade_date": "2025-11-18",
+  "issuer_data": {
+    "company_name": "Република Македонија"
+  }
+}

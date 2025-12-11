@@ -1,0 +1,93 @@
+{
+  "company_code": "TTKO3",
+  "company_name": "TTK Banka AD Skopje",
+  "history": [
+    {
+      "date": "2025-12-09",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0,
+      "turnover_best_mkd": 0,
+      "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-12-05",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0,
+      "turnover_best_mkd": 0,
+      "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-12-04",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0,
+      "turnover_best_mkd": 0,
+      "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-12-03",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0,
+      "turnover_best_mkd": 0,
+      "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-12-02",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0,
+      "turnover_best_mkd": 0,
+      "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-12-01",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0,
+      "turnover_best_mkd": 0,
+      "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-11-28",
+      "last_transaction_price": null,
+      "max_price": null,
+      "min_price": null,
+      "average_price": null,
+      "percent_change": null,
+      "quantity": 0,
+      "turnover_best_mkd": 0,
+      "total_turnover_mkd": 0
+    }
+  ],
+  "first_trade_date": "2025-11-28",
+  "issuer_data": {
+    "company_name": "ТТК Банка АД Скопје",
+    "address": "ttk@ttk.com.mk",
+    "city": "Скопје",
+    "website": "https:\\\\www.ttk.com.mk ",
+    "phone": "+389 2 3247 000 лок. 456",
+    "fax": "+389 2 31 31 387"
+  },
+  "company_name_original": "ТТК Банка АД Скопје"
+}
