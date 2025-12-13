@@ -88,7 +88,7 @@ export function PriceChangeBadge({ change, variant = 'pill', className, ...props
     return (
         <span
             className={cn(
-                'px-2 py-1 rounded-lg text-xs font-bold inline-flex items-center gap-1 min-w-[72px] justify-center shadow-sm border border-transparent',
+                'px-2 py-1 rounded-lg text-xs font-bold font-mono inline-flex items-center gap-1 min-w-[72px] justify-center shadow-sm border border-transparent',
                 isPositive
                     ? 'text-emerald-700 bg-emerald-100 dark:text-emerald-400 dark:bg-emerald-500/10'
                     : 'text-red-700 bg-red-100 dark:text-red-400 dark:bg-red-500/10',

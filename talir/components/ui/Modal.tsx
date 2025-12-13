@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from 'react'
+import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -42,7 +43,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
 
     if (!isRendered) return null
 
-    return (
+    return createPortal(
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 text-left touch-none">
             {/* Backdrop */}
             <div
@@ -60,6 +61,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                     isVisible ? "scale-100 opacity-100 translate-y-0" : "scale-95 opacity-0 translate-y-4",
                     className
                 )}
+                onClick={(e) => e.stopPropagation()}
             >
                 <div className="flex items-center justify-between mb-4">
                     {title && <h2 className="text-xl font-bold font-display text-text-primary">{title}</h2>}
@@ -75,6 +77,7 @@ export function Modal({ isOpen, onClose, title, children, className }: ModalProp
                     {children}
                 </div>
             </div>
-        </div>
+        </div>,
+        document.body
     )
 }

@@ -1,4 +1,4 @@
-import { StockData, StockSummary, DailyPrice } from './types'
+import { StockData, StockSummary, DailyPrice, MarketIndex, NewsItem } from './types'
 import { transliterate } from './transliterate'
 
 import { promises as fs } from 'fs'
@@ -26,18 +26,12 @@ export async function getAllStocks(): Promise<StockSummary[]> {
             code: item.code,
             name: transliterate(item.name || ''),
             price: item.price,
-            change: 0, // Market summary doesn't explicitly have absolute change, only pct?
-            // Actually, based on JSON viewed: "change_pct": 0.21
-            // We can calculate absolute change if needed, or if JSON has it.
-            // JSON sample: price: 25690, change_pct: 0.21. 
-            // Absolute change = price - (price / (1 + change_pct/100)). 
-            // Or just use 0 if not needed for summary list, but let's try to be precise.
-            // Using 0 for now unless we calculate it.
+            change: 0,
             changePercent: item.change_pct || 0,
             volume: item.volume || 0,
             turnover: item.turnover || 0,
             date: item.date
-        })).filter(s => s.price > 0 || s.volume > 0) // Filter out inactive if desired, or keep all
+        })).filter(s => s.price > 0 || s.volume > 0)
     } catch (e) {
         console.error("Error getting all stocks", e)
         return []
@@ -108,4 +102,58 @@ export function getChartData(history: DailyPrice[], months: number = 12) {
         }))
         .filter(d => new Date(d.time) >= cutoff)
         .sort((a, b) => a.time.localeCompare(b.time))
+}
+
+export async function getMarketIndices(): Promise<MarketIndex[]> {
+    // Mock data for indices as we don't have a direct source yet
+    return [
+        {
+            name: 'MBI10',
+            value: 6420.50,
+            change: -28.90,
+            changePercent: -0.45,
+            chartData: [6450, 6440, 6435, 6420, 6425, 6415, 6420.50]
+        },
+        {
+            name: 'OMB',
+            value: 128.30,
+            change: 0.12,
+            changePercent: 0.09,
+            chartData: [128.1, 128.15, 128.2, 128.25, 128.3, 128.28, 128.30]
+        },
+    ]
+}
+
+export async function getLatestNews(limit: number = 4): Promise<NewsItem[]> {
+    // Mock news data
+    return [
+        {
+            id: '1',
+            title: 'Macedonian Stock Exchange turnover rises 15% in Q1',
+            source: 'SEENews',
+            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+            imageUrl: 'https://images.unsplash.com/photo-1611974765270-ca12586343bb?auto=format&fit=crop&q=80&w=300&h=200'
+        },
+        {
+            id: '2',
+            title: 'Alkaloid AD Skopje reports record profits for 2024',
+            source: 'Macedonian News Agency',
+            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
+            imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80&w=300&h=200'
+        },
+        {
+            id: '3',
+            title: 'Komercijalna Banka announces new dividend payout',
+            source: 'Finance Mk',
+            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+            imageUrl: 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300&h=200'
+        },
+        {
+            id: '4',
+            title: 'Construction sector sees growth despite global headwinds',
+            source: 'Economy Press',
+            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
+            imageUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=300&h=200'
+        }
+    ].slice(0, limit)
 }

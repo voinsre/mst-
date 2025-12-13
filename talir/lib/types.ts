@@ -44,3 +44,20 @@ export interface StockSummary {
     turnover: number
     date: string
 }
+
+export interface MarketIndex {
+    name: string
+    value: number
+    change: number
+    changePercent: number
+    chartData?: number[] // For sparkline
+}
+
+export interface NewsItem {
+    id: string
+    title: string
+    source: string
+    publishedAt: string // ISO date
+    imageUrl?: string
+    url?: string
+}

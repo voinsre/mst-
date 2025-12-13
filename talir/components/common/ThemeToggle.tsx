@@ -12,6 +12,13 @@ export function ThemeToggle() {
     // Prevent hydration mismatch
     useEffect(() => {
         setMounted(true)
+        // Sync store with actual DOM state (initialized by layout script)
+        const isDarkDOM = document.documentElement.classList.contains('dark')
+        if (isDarkDOM && theme === 'light') {
+            toggleTheme()
+        } else if (!isDarkDOM && theme === 'dark') {
+            toggleTheme()
+        }
     }, [])
 
     if (!mounted) {

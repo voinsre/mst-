@@ -1,17 +1,31 @@
 import { cn } from '@/lib/utils'
+import Image from 'next/image'
+import Link from 'next/link'
 
 export function Logo({ className }: { className?: string }) {
     return (
-        <div className={cn("flex items-center gap-2", className)}>
-            <div className="relative flex h-8 w-8 items-center justify-center rounded-full bg-brand-600 text-white shadow-lg overflow-hidden group">
-                {/* Shine effect */}
-                <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-none" />
-
-                <span className="font-display text-xl font-bold italic relative z-10">T</span>
+        <Link href="/" className={cn("flex items-center gap-4", className)}>
+            <div className="relative w-14 h-14">
+                <Image
+                    src="/talir-app-logo.png"
+                    alt="Talir Logo"
+                    fill
+                    className="object-contain dark:hidden"
+                    sizes="56px"
+                    priority
+                />
+                <Image
+                    src="/talir-app-logo-dark.png"
+                    alt="Talir Logo"
+                    fill
+                    className="object-contain hidden dark:block"
+                    sizes="56px"
+                    priority
+                />
             </div>
-            <span className="font-display text-xl font-bold tracking-tight text-text-primary">
+            <span className="font-display text-3xl font-bold tracking-widest text-text-primary">
                 Talir
             </span>
-        </div>
+        </Link>
     )
 }
