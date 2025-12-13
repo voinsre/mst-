@@ -12,7 +12,7 @@ import { StockPageActions } from '@/components/stock/StockPageActions'
 import { PortfolioHoldingIndicator } from '@/components/portfolio/PortfolioHoldingIndicator'
 import { NewsSection } from '@/components/common/NewsSection'
 import { ResponsiveText } from '@/components/ui/ResponsiveText'
-import { StockSummary, StockHistoryItem } from '@/lib/types'
+import { StockSummary, DailyPrice } from '@/lib/types'
 
 // Replicate the ChartData interface locally or import it
 interface ChartData {
@@ -23,7 +23,7 @@ interface ChartData {
 
 interface StockClientProps {
     stock: any // Using specific type if available, e.g. Stock from lib/types
-    history: StockHistoryItem[]
+    history: DailyPrice[]
     currentPrice: number
     chartData: ChartData[]
 }
@@ -171,13 +171,15 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
                 </div>
 
                 {/* Actions */}
-                <StockPageActions stockCode={stock.company_code} stockData={{
+                <StockPageActions stock={{
                     code: stock.company_code,
-                    company_code: stock.company_code,
-                    company_name: stock.company_name,
+                    name: stock.company_name,
                     price: currentPrice,
-                    change: displayStats.absChange, // Using displayed change or daily? Usually Actions use Daily default, but keeping consistent is OK
-                    changePercent: displayStats.change
+                    change: displayStats.absChange,
+                    changePercent: displayStats.change,
+                    volume: volume || 0,
+                    turnover: turnover || 0,
+                    date: new Date().toISOString()
                 }} />
             </div>
 
