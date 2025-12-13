@@ -102,7 +102,7 @@ export function PortfolioTreemap({ isOpen, onClose, holdings }: PortfolioTreemap
                         height={200}
                         data={data.length > 0 ? treeMapData : []}
                         dataKey="size"
-                        ratio={4 / 3}
+
                         stroke="#fff"
                         fill="#8884d8"
                         content={<CustomContent />}
