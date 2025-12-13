@@ -2,12 +2,12 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Star, Bell, Share2, Globe, Phone, ExternalLink } from 'lucide-react'
+import { ArrowLeft, Star, Bell, Share2, Globe, Phone, ExternalLink, FileText, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardContent } from '@/components/ui/Card'
 import { PriceChangeBadge } from '@/components/ui/Badge'
 import { ClientPriceChart } from '@/components/charts/ClientPriceChart'
-import { formatPrice } from '@/lib/utils'
+import { formatPrice, cn } from '@/lib/utils'
 import { StockPageActions } from '@/components/stock/StockPageActions'
 import { PortfolioHoldingIndicator } from '@/components/portfolio/PortfolioHoldingIndicator'
 import { NewsSection } from '@/components/common/NewsSection'
@@ -32,32 +32,53 @@ type Timeframe = '1D' | '5D' | '1M' | '3M' | '6M' | 'YTD' | '1Y' | '5Y' | 'MAX'
 
 export function StockClient({ stock, history, currentPrice, chartData }: StockClientProps) {
     const [timeframe, setTimeframe] = useState<Timeframe>('1Y')
+    const [activeTab, setActiveTab] = useState<'news' | 'docs'>('news')
+    const [docPage, setDocPage] = useState(1)
 
-    // Filter Logic (Lifted from PriceChart)
+    // Filter Logic with Index-based fallback for short periods to ensure data display
     const filteredData = useMemo(() => {
         if (!chartData.length) return []
         const now = new Date()
-        const cutoff = new Date()
 
         switch (timeframe) {
-            case '1D': cutoff.setDate(now.getDate() - 1); break; // Note: Daily data usually implies 1D is just the latest point or diff
-            case '5D': cutoff.setDate(now.getDate() - 5); break;
-            case '1M': cutoff.setMonth(now.getMonth() - 1); break;
-            case '3M': cutoff.setMonth(now.getMonth() - 3); break;
-            case '6M': cutoff.setMonth(now.getMonth() - 6); break;
-            case 'YTD': cutoff.setMonth(0); cutoff.setDate(1); cutoff.setFullYear(now.getFullYear()); break;
-            case '1Y': cutoff.setFullYear(now.getFullYear() - 1); break;
-            case '5Y': cutoff.setFullYear(now.getFullYear() - 5); break;
-            case 'MAX': return chartData;
+            case '1D':
+                // Show last 2 points to create a line segment if possible, or just last 1
+                return chartData.slice(-2)
+            case '5D':
+                // Last 5 trading days
+                return chartData.slice(-5)
+            case '1M':
+                // Approx 22 trading days
+                return chartData.slice(-22)
+            case '3M':
+                // Approx 66 trading days
+                return chartData.slice(-66)
+            case '6M':
+                // Approx 132 trading days
+                return chartData.slice(-132)
+            case 'YTD':
+                const startOfYear = new Date(now.getFullYear(), 0, 1);
+                return chartData.filter(d => new Date(d.time) >= startOfYear)
+            case '1Y':
+                const oneYearAgo = new Date();
+                oneYearAgo.setFullYear(now.getFullYear() - 1);
+                return chartData.filter(d => new Date(d.time) >= oneYearAgo)
+            case '5Y':
+                const fiveYearsAgo = new Date();
+                fiveYearsAgo.setFullYear(now.getFullYear() - 5);
+                return chartData.filter(d => new Date(d.time) >= fiveYearsAgo)
+            case 'MAX':
+                return chartData;
+            default:
+                return chartData
         }
-
-        return chartData.filter(d => new Date(d.time) >= cutoff)
     }, [chartData, timeframe])
 
     // Calculate Dynamic Stats
     const displayStats = useMemo(() => {
         // Default to "Daily" stats if 1D or logic fails
-        let change = stock.history[0]?.percent_change || 0
+        const latestHistory = stock.history[stock.history.length - 1] || {}
+        let change = latestHistory.percent_change || 0
         let absChange = (currentPrice * change) / 100
         let label = "Today"
 
@@ -80,7 +101,7 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
             else label = timeframe
         } else if (timeframe === '1D') {
             // Keep default daily calc
-            const latest = history[0] || {}
+            const latest = history[history.length - 1] || {}
             change = latest.percent_change || 0
             absChange = (currentPrice * change) / 100
         }
@@ -89,7 +110,7 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
     }, [timeframe, filteredData, currentPrice, stock, history])
 
     // Derived Stats for Sidebar
-    const latest = history[0] || {}
+    const latest = history[history.length - 1] || {}
     const low = latest.min_price
     const high = latest.max_price
     const volume = latest.quantity
@@ -182,7 +203,104 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
                         </CardContent>
                     </Card>
 
-                    <NewsSection stockCode={stock.company_code} title="In the news" />
+                    {/* News & Documents Tabs */}
+                    <div className="flex flex-col gap-4">
+                        <div className="flex items-center gap-4 border-b border-border">
+                            <button
+                                onClick={() => setActiveTab('news')}
+                                className={cn(
+                                    "pb-3 text-sm font-bold border-b-2 transition-colors",
+                                    activeTab === 'news'
+                                        ? "border-brand-active text-text-primary"
+                                        : "border-transparent text-text-tertiary hover:text-text-secondary"
+                                )}
+                            >
+                                In the news
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('docs')}
+                                className={cn(
+                                    "pb-3 text-sm font-bold border-b-2 transition-colors",
+                                    activeTab === 'docs'
+                                        ? "border-brand-active text-text-primary"
+                                        : "border-transparent text-text-tertiary hover:text-text-secondary"
+                                )}
+                            >
+                                Documents
+                            </button>
+                        </div>
+
+                        {activeTab === 'news' ? (
+                            <NewsSection stockCode={stock.company_code} />
+                        ) : (
+                            <Card className="border-none shadow-none bg-transparent lg:bg-surface lg:shadow-card lg:border lg:border-border">
+                                <CardContent className="p-0 lg:p-6">
+                                    {stock.issuer_data?.reportLinks && stock.issuer_data.reportLinks.length > 0 ? (
+                                        <div className="flex flex-col gap-2">
+                                            {stock.issuer_data.reportLinks
+                                                .slice((docPage - 1) * 10, docPage * 10)
+                                                .map((doc: any, i: number) => (
+                                                    <a
+                                                        key={i}
+                                                        href={doc.url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="flex items-start gap-3 p-3 rounded-lg hover:bg-surface-secondary/50 transition-colors group border border-border/40 hover:border-border"
+                                                    >
+                                                        <div className="mt-1 p-2 rounded bg-surface-secondary text-brand-500 group-hover:bg-brand-500/10 group-hover:scale-105 transition-all">
+                                                            <FileText className="h-4 w-4" />
+                                                        </div>
+                                                        <div className="flex flex-col gap-0.5">
+                                                            <h3 className="text-sm font-bold text-text-primary group-hover:text-brand-500 transition-colors line-clamp-2">
+                                                                {doc.title}
+                                                            </h3>
+                                                            <div className="flex items-center gap-2 text-xs text-text-tertiary">
+                                                                <span>{doc.date || 'Unknown Date'}</span>
+                                                                <span>•</span>
+                                                                <span className="flex items-center gap-1 group-hover:text-brand-500 transition-colors">
+                                                                    Open Document <ExternalLink className="h-3 w-3" />
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                ))}
+
+                                            {/* Pagination */}
+                                            {stock.issuer_data.reportLinks.length > 10 && (
+                                                <div className="flex items-center justify-between mt-4 border-t border-border pt-4">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setDocPage(p => Math.max(1, p - 1))}
+                                                        disabled={docPage === 1}
+                                                        className="text-text-secondary hover:text-text-primary"
+                                                    >
+                                                        <ChevronLeft className="h-4 w-4 mr-1" /> Previous
+                                                    </Button>
+                                                    <span className="text-xs text-text-tertiary">
+                                                        Page {docPage} of {Math.ceil(stock.issuer_data.reportLinks.length / 10)}
+                                                    </span>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        onClick={() => setDocPage(p => Math.min(Math.ceil(stock.issuer_data.reportLinks.length / 10), p + 1))}
+                                                        disabled={docPage >= Math.ceil(stock.issuer_data.reportLinks.length / 10)}
+                                                        className="text-text-secondary hover:text-text-primary"
+                                                    >
+                                                        Next <ChevronRight className="h-4 w-4 ml-1" />
+                                                    </Button>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        <div className="text-center py-12 text-text-tertiary text-sm">
+                                            No documents available for this company.
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        )}
+                    </div>
                 </div>
 
                 {/* Right Sidebar (Stats & Info) */}
@@ -194,26 +312,36 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
                             <h2 className="text-lg font-bold text-text-primary">Key Statistics</h2>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            {/* Previous Close Calculation */}
+                            {history.length > 1 && (
+                                <div className="flex justify-between items-center py-2 border-b border-border/50">
+                                    <span className="text-xs text-text-secondary">Previous Close</span>
+                                    <span className="text-xs font-mono font-medium text-text-primary">
+                                        {formatPrice(history[history.length - 2]?.last_transaction_price || 0)}
+                                    </span>
+                                </div>
+                            )}
+
                             {low !== null && high !== null && (
                                 <div className="flex justify-between items-center py-2 border-b border-border/50">
-                                    <span className="text-sm text-text-secondary">Day Range</span>
-                                    <span className="text-sm font-mono font-medium text-text-primary">
+                                    <span className="text-xs text-text-secondary">Day Range</span>
+                                    <span className="text-xs font-mono font-medium text-text-primary whitespace-nowrap">
                                         {formatPrice(low)} - {formatPrice(high)}
                                     </span>
                                 </div>
                             )}
 
                             <div className="flex justify-between items-center py-2 border-b border-border/50">
-                                <span className="text-sm text-text-secondary">52 Week Range</span>
-                                <span className="text-sm font-mono font-medium text-text-primary">
+                                <span className="text-xs text-text-secondary">52 Week Range</span>
+                                <span className="text-xs font-mono font-medium text-text-primary whitespace-nowrap">
                                     {formatPrice(yearLow)} - {formatPrice(yearHigh)}
                                 </span>
                             </div>
 
                             {avgPrice > 0 && (
                                 <div className="flex justify-between items-center py-2 border-b border-border/50">
-                                    <span className="text-sm text-text-secondary">Average Price</span>
-                                    <span className="text-sm font-mono font-medium text-text-primary">
+                                    <span className="text-xs text-text-secondary">Average Price</span>
+                                    <span className="text-xs font-mono font-medium text-text-primary">
                                         {formatPrice(avgPrice)}
                                     </span>
                                 </div>
@@ -221,8 +349,8 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
 
                             {volume > 0 && (
                                 <div className="flex justify-between items-center py-2 border-b border-border/50">
-                                    <span className="text-sm text-text-secondary">Volume</span>
-                                    <span className="text-sm font-mono font-medium text-text-primary">
+                                    <span className="text-xs text-text-secondary">Volume</span>
+                                    <span className="text-xs font-mono font-medium text-text-primary">
                                         {volume.toLocaleString()}
                                     </span>
                                 </div>
@@ -230,16 +358,16 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
 
                             {turnover > 0 && (
                                 <div className="flex justify-between items-center py-2 border-b border-border/50">
-                                    <span className="text-sm text-text-secondary">Turnover</span>
-                                    <span className="text-sm font-mono font-medium text-text-primary">
+                                    <span className="text-xs text-text-secondary">Turnover</span>
+                                    <span className="text-xs font-mono font-medium text-text-primary">
                                         {formatPrice(turnover)}
                                     </span>
                                 </div>
                             )}
 
                             <div className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
-                                <span className="text-sm text-text-secondary">First Trade</span>
-                                <span className="text-sm font-medium text-text-primary">
+                                <span className="text-xs text-text-secondary">First Trade</span>
+                                <span className="text-xs font-medium text-text-primary">
                                     {stock.first_trade_date}
                                 </span>
                             </div>

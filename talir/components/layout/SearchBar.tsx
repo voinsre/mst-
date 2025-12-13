@@ -6,27 +6,9 @@ import { Search, X } from 'lucide-react'
 import { cn, formatPrice } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { PriceChangeBadge } from '@/components/ui/Badge'
+import { StockSummary } from '@/lib/types'
 
-interface SearchItem {
-    type: 'Index' | 'Stock'
-    symbol: string
-    name: string
-    price: number
-    change: number
-}
-
-// Mock Data
-const SEARCH_DATA: SearchItem[] = [
-    { type: 'Index', symbol: 'MBI10', name: 'MBI10 Index', price: 6420.50, change: -0.45 },
-    { type: 'Index', symbol: 'OMB', name: 'OMB Index', price: 128.30, change: 0.12 },
-    { type: 'Stock', symbol: 'KMB', name: 'Komercijalna Banka AD Skopje', price: 18500, change: 1.5 },
-    { type: 'Stock', symbol: 'ALK', name: 'Alkaloid AD Skopje', price: 21200, change: 0.8 },
-    { type: 'Stock', symbol: 'GRNT', name: 'Granit AD Skopje', price: 1450, change: -2.3 },
-    { type: 'Stock', symbol: 'MPT', name: 'Makpetrol AD Skopje', price: 67000, change: 0.0 },
-    { type: 'Stock', symbol: 'TEL', name: 'Makedonski Telekom AD', price: 380, change: -0.5 },
-]
-
-export function SearchBar({ className }: { className?: string }) {
+export function SearchBar({ className, items = [] }: { className?: string, items?: StockSummary[] }) {
     const router = useRouter()
     const containerRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
@@ -36,7 +18,7 @@ export function SearchBar({ className }: { className?: string }) {
     const [isOpen, setIsOpen] = useState(false)
     const [focusedIndex, setFocusedIndex] = useState(-1)
 
-    const tabs = ['All', 'Index', 'Stocks']
+    const tabs = ['All', 'Index', 'Stock']
 
     // Close on click outside
     useEffect(() => {
@@ -52,26 +34,30 @@ export function SearchBar({ className }: { className?: string }) {
     }, [])
 
     const filteredData = useMemo(() => {
-        return SEARCH_DATA.filter(item => {
+        if (!items || items.length === 0) return []
+
+        return items.filter(item => {
+            const itemType = item.type || 'Stock'
             const matchesTab = activeTab === 'All'
                 ? true
-                : activeTab === 'Stocks'
-                    ? item.type === 'Stock'
-                    : item.type === activeTab
+                : activeTab === itemType
 
             const matchesQuery = query === ''
                 ? true
                 : item.name.toLowerCase().includes(query.toLowerCase()) ||
-                item.symbol.toLowerCase().includes(query.toLowerCase())
+                item.code.toLowerCase().includes(query.toLowerCase())
 
             return matchesTab && matchesQuery
-        })
-    }, [query, activeTab])
+        }).slice(0, 50) // Limit results for performance
+    }, [query, activeTab, items])
 
-    const handleSelect = (item: SearchItem) => {
-        if (item.type === 'Stock') {
-            router.push(`/stock/${item.symbol}`)
+    const handleSelect = (item: StockSummary) => {
+        if (item.type === 'Index') {
+            router.push(`/market/${item.code}`)
+        } else {
+            router.push(`/stock/${item.code}`)
         }
+
         setQuery('')
         setIsOpen(false)
         setFocusedIndex(-1)
@@ -188,7 +174,7 @@ export function SearchBar({ className }: { className?: string }) {
                         {filteredData.length > 0 ? (
                             filteredData.map((item, index) => (
                                 <div
-                                    key={item.symbol}
+                                    key={item.code}
                                     className={cn(
                                         "px-4 py-3 transition-colors cursor-pointer group flex items-center justify-between",
                                         index === focusedIndex ? "bg-surface-secondary" : "hover:bg-surface-secondary"
@@ -201,14 +187,14 @@ export function SearchBar({ className }: { className?: string }) {
                                             {item.name}
                                         </span>
                                         <span className="text-xs text-text-tertiary font-bold tracking-wider">
-                                            {item.symbol} <span className="font-normal opacity-50">• {item.type.toUpperCase()}</span>
+                                            {item.code} <span className="font-normal opacity-50">• {(item.type || 'Stock').toUpperCase()}</span>
                                         </span>
                                     </div>
                                     <div className="flex items-center gap-4">
                                         <span className="text-sm font-mono font-medium text-text-primary">
                                             {formatPrice(item.price)}
                                         </span>
-                                        <PriceChangeBadge change={item.change} variant="pill" />
+                                        <PriceChangeBadge change={item.changePercent} variant="pill" />
                                     </div>
                                 </div>
                             ))

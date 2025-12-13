@@ -30,44 +30,8 @@ async function fetchHtml(url: string): Promise<string | null> {
     }
 }
 
-async function scrapeListingPage(url: string, issuers: Map<string, IssuerDetails>) {
-    console.log(`Scraping listing page: ${url}`);
-    const html = await fetchHtml(url);
-    if (!html) return;
+// Old scrapeListingPage removed
 
-    const $ = cheerio.load(html);
-    const rows = $('table tbody tr');
-
-    for (const row of rows) {
-        const cells = $(row).find('td');
-        if (cells.length < 7) continue;
-
-        // Logo is in 0, Name in 1
-        const nameLink = $(cells[1]).find('a');
-        const name = nameLink.text().trim();
-        const relativeLink = nameLink.attr('href'); // /en/symbol/ALK
-        const code = relativeLink?.split('/').pop() || '';
-
-        if (!code) continue;
-
-        const business = $(cells[2]).text().trim();
-        const address = $(cells[3]).text().trim();
-        const city = $(cells[4]).text().trim();
-        const phone = $(cells[5]).text().trim();
-        const siteLink = $(cells[6]).find('a').attr('href') || '';
-
-        issuers.set(code, {
-            code,
-            name,
-            sector: business,
-            address,
-            city,
-            phone,
-            website: siteLink,
-            reportLinks: []
-        });
-    }
-}
 
 async function scrapeIssuerDetails(code: string, details: IssuerDetails) {
     const url = `${BASE_URL}/en/symbol/${code}`;
@@ -108,11 +72,26 @@ async function main() {
 
     const issuers = new Map<string, IssuerDetails>();
 
+    // 0. Load Market Summary to map Name -> Code
+    const summaryFile = path.join(DATA_DIR, 'market_summary.json');
+    const summaryData = JSON.parse(fs.readFileSync(summaryFile, 'utf8'));
+    const nameToCode = new Map<string, string>();
+
+    summaryData.forEach((item: any) => {
+        if (item.name && item.code) {
+            nameToCode.set(item.name.toLowerCase().trim(), item.code);
+            // Also add some variations/normalizations if needed
+            nameToCode.set(item.name.toLowerCase().replace(/\s+/g, ' ').trim(), item.code);
+        }
+    });
+
+    console.log(`Loaded ${nameToCode.size} name mappings.`);
+
     // 1. Scrape listing pages
     // MSE has Super Listing, Exchange Listing, Mandatory Listing
-    await scrapeListingPage(`${BASE_URL}/en/issuers/shares-listing/super-listing`, issuers);
-    await scrapeListingPage(`${BASE_URL}/en/issuers/shares-listing/exchange-listing`, issuers);
-    await scrapeListingPage(`${BASE_URL}/en/issuers/shares-listing/mandatory-listing`, issuers);
+    await scrapeListingPage(`${BASE_URL}/en/issuers/super-listing`, issuers, nameToCode);
+    await scrapeListingPage(`${BASE_URL}/en/issuers/exchange-listing`, issuers, nameToCode);
+    await scrapeListingPage(`${BASE_URL}/en/issuers/mandatory-listing`, issuers, nameToCode);
 
     console.log(`Found ${issuers.size} issuers. Starting detail scrape...`);
 
@@ -130,6 +109,56 @@ async function main() {
     // 3. Save
     fs.writeFileSync(OUTPUT_FILE, JSON.stringify(Array.from(issuers.values()), null, 2));
     console.log(`Saved issuers data to ${OUTPUT_FILE}`);
+}
+
+async function scrapeListingPage(url: string, issuers: Map<string, IssuerDetails>, nameToCode: Map<string, string>) {
+    console.log(`Scraping listing page: ${url}`);
+    const html = await fetchHtml(url);
+    if (!html) return;
+
+    const $ = cheerio.load(html);
+    // Explicitly target tables
+    const rows = $('table.table tbody tr');
+
+    for (const row of rows) {
+        const cells = $(row).find('td');
+        if (cells.length < 7) continue;
+
+        // Name is in 1
+        const nameLink = $(cells[1]).find('a');
+        const nameText = nameLink.text().trim();
+
+        let code = nameToCode.get(nameText.toLowerCase());
+
+        if (!code) {
+            // Try normalized space match
+            code = nameToCode.get(nameText.toLowerCase().replace(/\s+/g, ' '));
+        }
+
+        if (!code) {
+            // Fallback: Check if the link itself contains the code (unlikely based on analysis)
+            // Or skip
+            console.warn(`No code found for company: "${nameText}"`);
+            continue;
+        }
+
+        const business = $(cells[2]).text().trim();
+        const address = $(cells[3]).text().trim();
+        const city = $(cells[4]).text().trim();
+        const phone = $(cells[5]).text().trim();
+        const siteLink = $(cells[6]).find('a').attr('href') || '';
+
+        issuers.set(code, {
+            code,
+            name: nameText,
+            sector: business,
+            address,
+            city,
+            phone,
+            website: siteLink,
+            reportLinks: []
+        });
+    }
 }
 
 main().catch(console.error);

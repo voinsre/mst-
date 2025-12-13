@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Home, Newspaper, PieChart, Bookmark, Settings, Plus, BarChart2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Home, Newspaper, PieChart, Bookmark, Settings, Plus, BarChart2, ChevronLeft, ChevronRight, Bell } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { useThemeStore } from '@/lib/store'
@@ -131,6 +131,16 @@ export function Sidebar({ className }: { className?: string }) {
                         label="My Watchlist"
                         href="/watchlist"
                         isActive={pathname.startsWith('/watchlist')}
+                        isCollapsed={!isOpen}
+                    />
+
+                    <SectionHeader label="Alerts" isCollapsed={!isOpen} />
+
+                    <SidebarItem
+                        icon={Bell}
+                        label="My Alerts"
+                        href="/alerts"
+                        isActive={pathname === '/alerts'}
                         isCollapsed={!isOpen}
                     />
                 </ul>

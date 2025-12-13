@@ -43,6 +43,7 @@ export interface StockSummary {
     volume: number
     turnover: number
     date: string
+    type?: 'Stock' | 'Index'
 }
 
 export interface MarketIndex {

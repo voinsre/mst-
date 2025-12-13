@@ -111,6 +111,20 @@ async function main() {
         const chunk = files.slice(i, i + CHUNK_SIZE);
         await Promise.all(chunk.map(updateStock));
     }
+
+    // Also run index scraper
+    console.log('Updating indices...');
+    const { exec } = await import('child_process');
+    exec('npx tsx scripts/scrape_indices.ts', (error, stdout, stderr) => {
+        if (error) {
+            console.error(`Error updating indices: ${error.message}`);
+            return;
+        }
+        if (stderr) {
+            console.error(`Indices stderr: ${stderr}`);
+        }
+        console.log(`Indices stdout: ${stdout}`);
+    });
 }
 
 main().catch(console.error);

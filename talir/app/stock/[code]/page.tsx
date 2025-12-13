@@ -18,7 +18,8 @@ export default async function StockPage({ params }: { params: Promise<{ code: st
     }
 
     const { history } = stock
-    const latest = history[0] || {}
+    // JSON history is Oldest -> Newest (ASC), so latest is the last item
+    const latest = history[history.length - 1] || {}
     const chartData = getChartData(history, 2000) // Ensure we have ample data for MAX/5Y
 
     // Current Price for client

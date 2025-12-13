@@ -6,10 +6,10 @@ import { ThemeToggle } from '@/components/common/ThemeToggle'
 import { Button } from '@/components/ui/Button'
 import { cn } from '@/lib/utils'
 import { SearchBar } from '@/components/layout/SearchBar'
-
+import { StockSummary } from '@/lib/types'
 import { usePathname } from 'next/navigation'
 
-export function Header({ className }: { className?: string }) {
+export function Header({ className, instruments = [] }: { className?: string, instruments?: StockSummary[] }) {
     const pathname = usePathname()
 
     return (
@@ -25,7 +25,7 @@ export function Header({ className }: { className?: string }) {
             <div className="flex flex-1 items-center justify-center px-4 max-w-2xl transition-all duration-300 mx-auto">
                 {pathname !== '/markets' && (
                     <div className="hidden w-full md:block">
-                        <SearchBar />
+                        <SearchBar items={instruments} />
                     </div>
                 )}
             </div>

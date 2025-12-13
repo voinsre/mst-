@@ -18,7 +18,7 @@ export function StockRow({ stock, showVolume = false, className }: StockRowProps
     const isPositive = stock.changePercent >= 0
     return (
         <Link
-            href={`/stock/${stock.code}`}
+            href={stock.type === 'Index' ? `/market/${stock.code}` : `/stock/${stock.code}`}
             className={cn(
                 "flex items-center justify-between px-4 py-3 hover:bg-surface-secondary transition-all cursor-pointer group",
                 className

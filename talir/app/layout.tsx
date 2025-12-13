@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header'
 import { Sidebar } from '@/components/layout/Sidebar'
 import { BottomNav } from '@/components/layout/BottomNav'
 import { cn } from '@/lib/utils'
+import { getAllInstruments } from '@/lib/data'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' })
@@ -19,11 +20,13 @@ export const viewport = {
   themeColor: '#ffffff',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const instruments = await getAllInstruments()
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -59,7 +62,7 @@ export default function RootLayout({
         jetbrainsMono.variable
       )}>
         {/* Header: Fixed Height, non-sticky (flex item) */}
-        <Header />
+        <Header instruments={instruments} />
 
         {/* Main Workspace: Flex-1 to fill remaining space */}
         <div className="flex flex-1 overflow-hidden">

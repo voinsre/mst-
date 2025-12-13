@@ -124,7 +124,7 @@ export function MarketsClient({ initialStocks }: MarketsClientProps) {
 
             {/* Results Info */}
             <div className="flex items-center justify-between text-xs text-text-tertiary px-1">
-                <span>{displayStocks.length} stocks found</span>
+                <span>{displayStocks.length} instruments found</span>
                 <span>Sorted by {sortKey} {sortOrder}</span>
             </div>
 

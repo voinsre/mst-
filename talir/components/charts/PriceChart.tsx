@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, memo } from 'react'
 import { createChart, ColorType, IChartApi, ISeriesApi, Time } from 'lightweight-charts'
 import { cn } from '@/lib/utils'
 import { useThemeStore } from '@/lib/store'
@@ -19,9 +19,10 @@ interface PriceChartProps {
         upColor?: string
         downColor?: string
     }
+    excludePeriods?: string[]
 }
 
-export function PriceChart({ data, timeframe, onTimeframeChange }: PriceChartProps) {
+function PriceChartComponent({ data, timeframe, onTimeframeChange, excludePeriods = [] }: PriceChartProps) {
     const chartContainerRef = useRef<HTMLDivElement>(null)
     const chartRef = useRef<IChartApi | null>(null)
     const seriesRef = useRef<ISeriesApi<"Area"> | null>(null)
@@ -95,10 +96,23 @@ export function PriceChart({ data, timeframe, onTimeframeChange }: PriceChartPro
             layout: {
                 background: { type: ColorType.Solid, color: 'transparent' },
                 textColor: isDarkMode ? '#9ca3af' : '#6b7280',
+                fontFamily: 'Inter, sans-serif',
             },
             grid: {
-                vertLines: { color: isDarkMode ? '#374151' : '#e5e7eb', visible: false },
-                horzLines: { color: isDarkMode ? '#374151' : '#e5e7eb', visible: true, style: 2 },
+                vertLines: { visible: false },
+                horzLines: { color: isDarkMode ? '#374151' : '#e5e7eb', visible: true, style: 1 }, // Solid but subtle
+            },
+            rightPriceScale: {
+                borderVisible: false,
+                scaleMargins: {
+                    top: 0.1,
+                    bottom: 0.1,
+                },
+            },
+            timeScale: {
+                borderVisible: false,
+                fixLeftEdge: true,
+                fixRightEdge: true,
             },
             width: chartContainerRef.current.clientWidth,
             height: 400,
@@ -108,13 +122,13 @@ export function PriceChart({ data, timeframe, onTimeframeChange }: PriceChartPro
             crosshair: {
                 vertLine: {
                     width: 1,
-                    color: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
-                    style: 3, // Dashed
+                    color: isDarkMode ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.4)',
+                    style: 3,
                     labelVisible: false,
                 },
                 horzLine: {
                     visible: false,
-                    labelVisible: false,
+                    labelVisible: true, // Show price label on crosshair
                 },
             },
         })
@@ -122,7 +136,7 @@ export function PriceChart({ data, timeframe, onTimeframeChange }: PriceChartPro
         // Add Area Series
         const newSeries = chart.addAreaSeries({
             lineColor: chartColor,
-            topColor: chartColor + '40',
+            topColor: chartColor + '20', // Very light fill
             bottomColor: chartColor + '00',
             lineWidth: 2,
             crosshairMarkerVisible: true,
@@ -136,6 +150,25 @@ export function PriceChart({ data, timeframe, onTimeframeChange }: PriceChartPro
             value: d.value
         })))
 
+        // LAST POINT MARKER (Google Finance Style)
+        if (data.length > 0) {
+            const lastItem = data[data.length - 1];
+            newSeries.setMarkers([
+                {
+                    time: lastItem.time as Time,
+                    position: 'inBar',
+                    color: chartColor,
+                    shape: 'circle',
+                    size: 1, // Determines size relative to bar width?, no, it's abstract
+                    text: undefined,
+                }
+            ]);
+            // Note: lightweight-charts markers are fixed shapes. 
+            // 'circle' is standard. 'size' logic varies. 
+            // If we want a specific "dot on the line", a small circle marker at the end works.
+        }
+
+        // Ensure we zoom out to fit all data
         chart.timeScale().fitContent()
 
         // Tooltip Logic
@@ -226,21 +259,25 @@ export function PriceChart({ data, timeframe, onTimeframeChange }: PriceChartPro
             </div>
 
             <div className="flex justify-start gap-1 flex-wrap pl-2 md:pl-0">
-                {(['1D', '5D', '1M', '3M', '6M', 'YTD', '1Y', '5Y', 'MAX'] as const).map((tf) => (
-                    <button
-                        key={tf}
-                        onClick={() => handleTimeframeChange(tf)}
-                        className={cn(
-                            "px-3 py-1 text-xs font-bold rounded-full transition-all",
-                            effectiveTimeframe === tf
-                                ? "bg-brand-active text-brand-text shadow-sm"
-                                : "text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary"
-                        )}
-                    >
-                        {tf}
-                    </button>
-                ))}
+                {(['1D', '5D', '1M', '3M', '6M', 'YTD', '1Y', '5Y', 'MAX'] as const)
+                    .filter(tf => !excludePeriods.includes(tf))
+                    .map((tf) => (
+                        <button
+                            key={tf}
+                            onClick={() => handleTimeframeChange(tf)}
+                            className={cn(
+                                "px-3 py-1 text-xs font-bold rounded-full transition-all",
+                                effectiveTimeframe === tf
+                                    ? "bg-brand-active text-brand-text shadow-sm"
+                                    : "text-text-tertiary hover:bg-surface-secondary hover:text-text-secondary"
+                            )}
+                        >
+                            {tf}
+                        </button>
+                    ))}
             </div>
         </div>
     )
 }
+
+export const PriceChart = memo(PriceChartComponent)

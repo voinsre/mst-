@@ -1,8 +1,8 @@
 
-import { getAllStocks } from "@/lib/data"
+import { getAllInstruments } from "@/lib/data"
 import { WatchlistClient } from "./client"
 
 export default async function WatchlistPage() {
-    const stockData = await getAllStocks()
+    const stockData = await getAllInstruments()
     return <WatchlistClient stockData={stockData} />
 }

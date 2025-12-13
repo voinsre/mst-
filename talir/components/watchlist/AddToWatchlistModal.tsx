@@ -33,7 +33,7 @@ export function AddToWatchlistModal({ isOpen, onClose, listId, allStocks }: AddT
     }, [query, allStocks])
 
     const handleSelectStock = (stock: StockSummary) => {
-        addToList(listId, { code: stock.code })
+        addToList(listId, stock.code)
         setQuery('')
         onClose()
     }

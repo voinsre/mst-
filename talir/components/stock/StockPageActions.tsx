@@ -2,12 +2,13 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { Plus, Check, MoreHorizontal, Briefcase, Eye, ChevronDown } from 'lucide-react'
+import { Plus, Check, MoreHorizontal, Briefcase, Eye, ChevronDown, Bell, Share2 } from 'lucide-react'
 import { useWatchlistStore } from '@/lib/stores/watchlist'
 import { usePortfolioStore } from '@/lib/stores/portfolio'
 import { CreateListModal } from '@/components/watchlist/CreateListModal'
 import { CreatePortfolioModal } from '@/components/portfolio/CreatePortfolioModal'
 import { AddHoldingModal } from '@/components/portfolio/AddHoldingModal'
+import { AddAlertModal } from './AddAlertModal'
 import { cn } from '@/lib/utils'
 import { StockSummary } from '@/lib/types'
 
@@ -30,6 +31,7 @@ export function StockPageActions({ stockCode, stockData, variant = 'default', cl
     const [isCreateListModalOpen, setIsCreateListModalOpen] = useState(false)
     const [isCreatePortfolioModalOpen, setIsCreatePortfolioModalOpen] = useState(false)
     const [isAddHoldingModalOpen, setIsAddHoldingModalOpen] = useState(false)
+    const [isAddAlertModalOpen, setIsAddAlertModalOpen] = useState(false)
     const [selectedPortfolioId, setSelectedPortfolioId] = useState<string | undefined>(undefined)
 
     const handleWatchlistToggle = (listId: string) => {
@@ -46,7 +48,16 @@ export function StockPageActions({ stockCode, stockData, variant = 'default', cl
         setIsPortfolioDropdownOpen(false)
     }
 
-    // Prepare mock data for AddHoldingModal if stockData is missing (fallback)
+    const handleShare = (e: React.MouseEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        const url = window.location.origin + (stockData?.type === 'Index' ? `/market/${stockCode}` : `/stock/${stockCode}`)
+        navigator.clipboard.writeText(url)
+        // Ideally show toast here
+        alert('Link copied to clipboard')
+    }
+
+    // Prepare mock data for AddHoldingModal and AlertModal if stockData is missing (fallback)
     const mockStockDataForModal: StockSummary[] = stockData ? [stockData] : [{
         code: stockCode,
         company_code: stockCode,
@@ -54,7 +65,10 @@ export function StockPageActions({ stockCode, stockData, variant = 'default', cl
         price: 0,
         change: 0,
         changePercent: 0,
+        type: 'Stock'
     } as any]
+
+    const currentPrice = stockData?.price || 0
 
     return (
         <div className={cn("flex items-center gap-2", className)}>
@@ -72,6 +86,7 @@ export function StockPageActions({ stockCode, stockData, variant = 'default', cl
                         e.stopPropagation()
                         setIsWatchlistDropdownOpen(!isWatchlistDropdownOpen)
                     }}
+                    title="Add to Watchlist"
                 >
                     <Eye className="h-4 w-4" />
                     {variant === 'default' && (
@@ -145,6 +160,7 @@ export function StockPageActions({ stockCode, stockData, variant = 'default', cl
                         e.stopPropagation()
                         setIsPortfolioDropdownOpen(!isPortfolioDropdownOpen)
                     }}
+                    title="Add to Portfolio"
                 >
                     <Briefcase className="h-4 w-4" />
                     {variant === 'default' && (
@@ -198,6 +214,40 @@ export function StockPageActions({ stockCode, stockData, variant = 'default', cl
                 )}
             </div>
 
+            {/* Alert Action */}
+            <Button
+                variant="secondary"
+                size="sm"
+                className={cn(
+                    "gap-2",
+                    variant === 'icon' && "p-2 h-8 w-8 hover:bg-surface-tertiary"
+                )}
+                onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setIsAddAlertModalOpen(true)
+                }}
+                title="Set Alert"
+            >
+                <Bell className="h-4 w-4" />
+                {variant === 'default' && <span className="hidden sm:inline">Add Alert</span>}
+            </Button>
+
+            {/* Share Action */}
+            <Button
+                variant="secondary"
+                size="sm"
+                className={cn(
+                    "gap-2",
+                    variant === 'icon' && "p-2 h-8 w-8 hover:bg-surface-tertiary"
+                )}
+                onClick={handleShare}
+                title="Share"
+            >
+                <Share2 className="h-4 w-4" />
+                {variant === 'default' && <span className="hidden sm:inline">Share</span>}
+            </Button>
+
             <CreateListModal
                 isOpen={isCreateListModalOpen}
                 onClose={() => setIsCreateListModalOpen(false)}
@@ -219,6 +269,13 @@ export function StockPageActions({ stockCode, stockData, variant = 'default', cl
                 allStocks={stockCode ? mockStockDataForModal : []}
                 portfolioId={selectedPortfolioId}
                 initialStockCode={stockCode}
+            />
+
+            <AddAlertModal
+                isOpen={isAddAlertModalOpen}
+                onClose={() => setIsAddAlertModalOpen(false)}
+                symbol={stockCode}
+                currentPrice={currentPrice}
             />
         </div>
     )

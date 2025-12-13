@@ -1,4 +1,14 @@
-import { StockData, StockSummary, DailyPrice, MarketIndex, NewsItem } from './types'
+export interface NewsItem {
+    id: string
+    title: string
+    source: string
+    publishedAt: string
+    imageUrl?: string
+    url?: string
+}
+
+import { StockData, StockSummary, DailyPrice, MarketIndex } from './types'
+export type { StockData, StockSummary, DailyPrice, MarketIndex }
 import { transliterate } from './transliterate'
 
 import { promises as fs } from 'fs'
@@ -24,13 +34,14 @@ export async function getAllStocks(): Promise<StockSummary[]> {
 
         return data.map((item: any) => ({
             code: item.code,
-            name: transliterate(item.name || ''),
+            name: item.name || '',
             price: item.price,
             change: 0,
             changePercent: item.change_pct || 0,
             volume: item.volume || 0,
             turnover: item.turnover || 0,
-            date: item.date
+            date: item.date,
+            type: 'Stock' as const
         })).filter(s => s.price > 0 || s.volume > 0)
     } catch (e) {
         console.error("Error getting all stocks", e)
@@ -38,22 +49,74 @@ export async function getAllStocks(): Promise<StockSummary[]> {
     }
 }
 
+// Unified fetcher for both stocks and indices
+export async function getAllInstruments(): Promise<StockSummary[]> {
+    const [stocks, indices] = await Promise.all([
+        getAllStocks(),
+        getMarketIndices()
+    ])
+
+    const indexItems: StockSummary[] = indices.map(idx => ({
+        code: idx.name,
+        name: idx.name,
+        price: idx.value,
+        change: idx.change,
+        changePercent: idx.changePercent,
+        volume: 0,
+        turnover: 0,
+        date: new Date().toISOString(), // Or relevant date if available
+        type: 'Index' as const
+    }))
+
+    return [...indexItems, ...stocks]
+}
+
+// Fetch all issuers (cached)
+let issuersCache: any[] | null = null;
+
+async function getIssuers(): Promise<any[]> {
+    if (issuersCache) return issuersCache;
+    try {
+        const data = await fetchJson<any[]>('issuers.json');
+        issuersCache = data || [];
+        return issuersCache;
+    } catch (e) {
+        console.error("Error loading issuers", e);
+        return [];
+    }
+}
+
 // Fetch single stock details
 export async function getStock(code: string): Promise<StockData | null> {
     try {
-        const stock = await fetchJson<any>(`stocks/${code}.json`)
+        const [stock, issuers] = await Promise.all([
+            fetchJson<any>(`stocks/${code}.json`),
+            getIssuers()
+        ]);
+
         if (!stock) return null
 
         // Process history to standard format
         const history: DailyPrice[] = Array.isArray(stock.history) ? stock.history : []
 
+        // Find issuer data
+        const issuerDetails = issuers.find((i: any) => i.code === code);
+
+        // Merge scraped issuer data with any existing data
+        const mergedIssuerData = {
+            ...stock.issuer_data,
+            ...issuerDetails,
+            company_name: stock.company_name || issuerDetails?.name, // Prefer file source of truth
+            name: stock.company_name || issuerDetails?.name, // Ensure 'name' is also consistent
+        };
+
         return {
             company_code: stock.company_code,
-            company_name: transliterate(stock.company_name),
+            company_name: stock.company_name,
             company_name_original: stock.company_name,
             history: history,
-            first_trade_date: history.length > 0 ? history[history.length - 1].date : '',
-            issuer_data: stock.issuer_data // Pass through optional issuer data
+            first_trade_date: history.length > 0 ? history[0].date : '',
+            issuer_data: mergedIssuerData
         }
     } catch (e) {
         console.error(`Error getting stock ${code}`, e)
@@ -104,56 +167,162 @@ export function getChartData(history: DailyPrice[], months: number = 12) {
         .sort((a, b) => a.time.localeCompare(b.time))
 }
 
-export async function getMarketIndices(): Promise<MarketIndex[]> {
-    // Mock data for indices as we don't have a direct source yet
-    return [
-        {
-            name: 'MBI10',
-            value: 6420.50,
-            change: -28.90,
-            changePercent: -0.45,
-            chartData: [6450, 6440, 6435, 6420, 6425, 6415, 6420.50]
-        },
-        {
-            name: 'OMB',
-            value: 128.30,
-            change: 0.12,
-            changePercent: 0.09,
-            chartData: [128.1, 128.15, 128.2, 128.25, 128.3, 128.28, 128.30]
-        },
-    ]
+// Helper to parse date from title if date field is empty or standard
+// Title format example: "10/30/2025 - Komercijalna Banka..."
+function parseDateFromTitle(title: string, dateStr?: string): Date {
+    if (dateStr) return new Date(dateStr)
+
+    // Try extracting MM/DD/YYYY from start of title
+    const match = title.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/)
+    if (match) {
+        return new Date(`${match[3]}-${match[1]}-${match[2]}`)
+    }
+    return new Date() // Fallback
 }
 
-export async function getLatestNews(limit: number = 4): Promise<NewsItem[]> {
-    // Mock news data
-    return [
-        {
-            id: '1',
-            title: 'Macedonian Stock Exchange turnover rises 15% in Q1',
-            source: 'SEENews',
-            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-            imageUrl: 'https://images.unsplash.com/photo-1611974765270-ca12586343bb?auto=format&fit=crop&q=80&w=300&h=200'
-        },
-        {
-            id: '2',
-            title: 'Alkaloid AD Skopje reports record profits for 2024',
-            source: 'Macedonian News Agency',
-            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(), // 5 hours ago
-            imageUrl: 'https://images.unsplash.com/photo-1590283603385-17ffb3a7f29f?auto=format&fit=crop&q=80&w=300&h=200'
-        },
-        {
-            id: '3',
-            title: 'Komercijalna Banka announces new dividend payout',
-            source: 'Finance Mk',
-            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-            imageUrl: 'https://images.unsplash.com/photo-1601597111158-2fceff292cdc?auto=format&fit=crop&q=80&w=300&h=200'
-        },
-        {
-            id: '4',
-            title: 'Construction sector sees growth despite global headwinds',
-            source: 'Economy Press',
-            publishedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-            imageUrl: 'https://images.unsplash.com/photo-1541888946425-d81bb19240f5?auto=format&fit=crop&q=80&w=300&h=200'
+export interface IndexDetails {
+    code: string
+    name: string
+    currentValue: number
+    change: number
+    changePercent: number
+    history: { date: string; value: number }[]
+    dayRange: { min: number; max: number } | null
+    yearRange: { min: number; max: number } | null
+}
+
+export async function getIndexDetails(code: string): Promise<IndexDetails | null> {
+    try {
+        const data = await fetchJson<any[]>(`indices/${code}.json`)
+        if (!data || data.length === 0) return null
+
+        // Sort by date ascending for history
+        const sorted = data.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+
+        const latest = sorted[sorted.length - 1]
+        const prev = sorted.length > 1 ? sorted[sorted.length - 2] : latest
+
+        const change = latest.value - prev.value
+        const changePercent = prev.value !== 0 ? (change / prev.value) * 100 : 0
+
+        // Ranges
+        // Day Range is tricky with 1 data point per day. Google Finance shows Day Range for *today's* trading.
+        // We only have closing prices usually. If we have High/Low in the scraper, we use that.
+        // We don't have High/Low for indices yet, mostly just Value (which acts as Close).
+        // So Day Range might be just the current value or N/A. 
+        // Let's assume N/A or just show current.
+        // To be helpful, we can just say "Day Range" is "value - value" if single point, not great.
+        // Or if we check the *current* scraper, does it return High/Low?
+        // The robust scraper found "Value", "Change %". No High/Low.
+        // So Day Range will be null for now.
+
+        // 52 Week Range
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        const lastYearData = sorted.filter(d => new Date(d.date) >= oneYearAgo);
+
+        let yearMin = Infinity;
+        let yearMax = -Infinity;
+
+        lastYearData.forEach(d => {
+            if (d.value < yearMin) yearMin = d.value;
+            if (d.value > yearMax) yearMax = d.value;
+        });
+
+        if (yearMin === Infinity) yearMin = latest.value;
+        if (yearMax === -Infinity) yearMax = latest.value;
+
+        return {
+            code,
+            name: code, // MBI10 or OMB
+            currentValue: latest.value,
+            change,
+            changePercent,
+            history: sorted.map(d => ({ date: d.date, value: d.value })),
+            dayRange: null, // Scraper doesn't provide intraday High/Low
+            yearRange: { min: yearMin, max: yearMax }
         }
-    ].slice(0, limit)
+    } catch (e) {
+        console.error(`Error loading index details for ${code}`, e)
+        return null
+    }
+}
+
+export async function getMarketIndices(): Promise<MarketIndex[]> {
+    try {
+        const [mbi10Data, ombData] = await Promise.all([
+            fetchJson<any[]>('indices/MBI10.json'),
+            fetchJson<any[]>('indices/OMB.json')
+        ])
+
+        const indices: MarketIndex[] = []
+
+        if (mbi10Data && mbi10Data.length > 0) {
+            const latest = mbi10Data[mbi10Data.length - 1]
+            const prev = mbi10Data.length > 1 ? mbi10Data[mbi10Data.length - 2] : latest
+            const change = latest.value - prev.value
+            const changePercent = (change / prev.value) * 100
+
+            indices.push({
+                name: 'MBI10',
+                value: latest.value,
+                change: change,
+                changePercent: changePercent,
+                chartData: mbi10Data.slice(-30).map((d: any) => d.value)
+            })
+        }
+
+        if (ombData && ombData.length > 0) {
+            const latest = ombData[ombData.length - 1]
+            const prev = ombData.length > 1 ? ombData[ombData.length - 2] : latest
+            const change = latest.value - prev.value
+            const changePercent = (change / prev.value) * 100
+
+            indices.push({
+                name: 'OMB',
+                value: latest.value,
+                change: change,
+                changePercent: changePercent,
+                chartData: ombData.slice(-30).map((d: any) => d.value)
+            })
+        }
+
+        return indices
+    } catch (e) {
+        console.error("Error loading indices", e)
+        return []
+    }
+}
+
+export async function getLatestNews(limit: number = 6): Promise<NewsItem[]> {
+    try {
+        const issuers = await getIssuers()
+        const allReports: NewsItem[] = []
+
+        issuers.forEach(issuer => {
+            if (issuer.reportLinks) {
+                issuer.reportLinks.forEach((report: any, index: number) => {
+                    const date = parseDateFromTitle(report.title, report.date)
+                    const titleClean = report.title.replace(/^\d{1,2}\/\d{1,2}\/\d{4}\s-\s/, '').split(' - ')[1] || report.title
+
+                    allReports.push({
+                        id: `${issuer.code}-${index}`,
+                        title: `${issuer.code}: ${report.title}`,
+                        source: 'MSE',
+                        publishedAt: date.toISOString(),
+                        imageUrl: undefined, // No images for reports
+                        url: report.url
+                    })
+                })
+            }
+        })
+
+        return allReports
+            .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
+            .slice(0, limit)
+
+    } catch (e) {
+        console.error("Error loading news", e)
+        return []
+    }
 }

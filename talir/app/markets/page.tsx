@@ -1,6 +1,6 @@
 
 import { MarketsClient } from './client'
-import { getAllStocks } from '@/lib/data'
+import { getAllInstruments } from '@/lib/data'
 import { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 }
 
 export default async function MarketsPage() {
-    const stocks = await getAllStocks()
+    const stocks = await getAllInstruments()
 
     return (
         <div className="min-h-screen bg-background pb-20">
