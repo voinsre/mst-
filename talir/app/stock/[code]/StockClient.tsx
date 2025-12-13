@@ -171,16 +171,19 @@ export function StockClient({ stock, history, currentPrice, chartData }: StockCl
                 </div>
 
                 {/* Actions */}
-                <StockPageActions stock={{
-                    code: stock.company_code,
-                    name: stock.company_name,
-                    price: currentPrice,
-                    change: displayStats.absChange,
-                    changePercent: displayStats.change,
-                    volume: volume || 0,
-                    turnover: turnover || 0,
-                    date: new Date().toISOString()
-                }} />
+                <StockPageActions
+                    stockCode={stock.company_code}
+                    stockData={{
+                        code: stock.company_code,
+                        name: stock.company_name,
+                        price: currentPrice,
+                        change: displayStats.absChange,
+                        changePercent: displayStats.change,
+                        volume: volume || 0,
+                        turnover: turnover || 0,
+                        date: new Date().toISOString()
+                    }}
+                />
             </div>
 
             {/* Main Content Grid */}
