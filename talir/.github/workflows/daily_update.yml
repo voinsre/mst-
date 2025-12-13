@@ -1,48 +1,45 @@
 
-name: Daily Stock Data Update
+name: Daily Stock Update v2
 
 on:
   schedule:
-    # Runs at 02:00 UTC (which is roughly 03:00 or 04:00 AM Macedonia time depending on DST)
+    # Runs at 02:00 UTC (04:00 Macedonia)
     - cron: '0 2 * * *'
-  workflow_dispatch: # Allows manual triggering from GitHub UI
+  workflow_dispatch:
 
 permissions:
   contents: write
 
 jobs:
-  update-data:
+  run-scraper:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Checkout repository
+    - name: Checkout Code
       uses: actions/checkout@v4
 
-    - name: Setup Node.js
+    - name: Setup Node
       uses: actions/setup-node@v4
       with:
         node-version: '20'
         cache: 'npm'
 
-    - name: Install dependencies
-      # Use ci for faster, cleaner install (requires package-lock.json)
-      # If no lock file, use 'npm install'
-      run: npm ci || npm install
+    - name: Install Deps
+      run: npm install
 
-    - name: Run Daily Update Script
+    - name: Run Update Script
       run: npm run script:update
 
-    - name: Commit and Push Changes
+    - name: Commit Changes
       run: |
-        git config --global user.name "GitHub Action Bot"
-        git config --global user.email "actions@github.com"
+        git config --global user.name "Scraper Bot"
+        git config --global user.email "bot@example.com"
         
-        # Check if there are changes
         if [[ -n $(git status --porcelain) ]]; then
-          echo "Changes detected, committing..."
+          echo "New data found, committing..."
           git add public/data/stocks/*.json
-          git commit -m "chore(data): daily stock update [skip ci]"
+          git commit -m "chore: daily data refresh [skip ci]"
           git push
         else
-          echo "No changes detected."
+          echo "No new data found."
         fi
