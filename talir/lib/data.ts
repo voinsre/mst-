@@ -11,44 +11,6 @@ import { StockData, StockSummary, DailyPrice, MarketIndex } from './types'
 export type { StockData, StockSummary, DailyPrice, MarketIndex }
 import { transliterate } from './transliterate'
 
-import { promises as fs } from 'fs'
-import path from 'path'
-
-// Helper to fetch JSON from public folder (Server Side)
-async function fetchJson<T>(relativePath: string): Promise<T | null> {
-    try {
-        const fullPath = path.join(process.cwd(), 'public', 'data', relativePath)
-        const fileContents = await fs.readFile(fullPath, 'utf8')
-        return JSON.parse(fileContents)
-    } catch (e) {
-        console.error(`Failed to read ${relativePath}`, e)
-        return null
-    }
-}
-
-// Fetch all stocks summary
-export async function getAllStocks(): Promise<StockSummary[]> {
-    try {
-        const data = await fetchJson<any[]>('market_summary.json')
-        if (!data) return []
-
-        return data.map((item: any) => ({
-            code: item.code,
-            name: item.name || '',
-            price: item.price,
-            change: 0,
-            changePercent: item.change_pct || 0,
-            volume: item.volume || 0,
-            turnover: item.turnover || 0,
-            date: item.date,
-            type: 'Stock' as const
-        })).filter(s => s.price > 0 || s.volume > 0)
-    } catch (e) {
-        console.error("Error getting all stocks", e)
-        return []
-    }
-}
-
 // Unified fetcher for both stocks and indices
 export async function getAllInstruments(): Promise<StockSummary[]> {
     const [stocks, indices] = await Promise.all([
@@ -71,14 +33,40 @@ export async function getAllInstruments(): Promise<StockSummary[]> {
     return [...indexItems, ...stocks]
 }
 
-// Fetch all issuers (cached)
+// Fetch all stocks summary
+export async function getAllStocks(): Promise<StockSummary[]> {
+    try {
+        // Use dynamic import which works better in Serverless than fs
+        const module = await import('@/public/data/market_summary.json')
+        const data = module.default as any[]
+
+        if (!data) return []
+
+        return data.map((item: any) => ({
+            code: item.code,
+            name: item.name || '',
+            price: item.price,
+            change: 0,
+            changePercent: item.change_pct || 0,
+            volume: item.volume || 0,
+            turnover: item.turnover || 0,
+            date: item.date,
+            type: 'Stock' as const
+        })).filter(s => s.price > 0 || s.volume > 0)
+    } catch (e) {
+        console.error("Error getting all stocks", e)
+        return []
+    }
+}
+
+// Fetch all issuers (cached in memory for the lambda lifetime)
 let issuersCache: any[] | null = null;
 
 async function getIssuers(): Promise<any[]> {
     if (issuersCache) return issuersCache;
     try {
-        const data = await fetchJson<any[]>('issuers.json');
-        issuersCache = data || [];
+        const module = await import('@/public/data/issuers.json');
+        issuersCache = module.default as any[] || [];
         return issuersCache;
     } catch (e) {
         console.error("Error loading issuers", e);
@@ -89,10 +77,12 @@ async function getIssuers(): Promise<any[]> {
 // Fetch single stock details
 export async function getStock(code: string): Promise<StockData | null> {
     try {
-        const [stock, issuers] = await Promise.all([
-            fetchJson<any>(`stocks/${code}.json`),
+        const [stockModule, issuers] = await Promise.all([
+            import(`@/public/data/stocks/${code}.json`),
             getIssuers()
         ]);
+
+        const stock = stockModule.default as any
 
         if (!stock) return null
 
@@ -193,7 +183,9 @@ export interface IndexDetails {
 
 export async function getIndexDetails(code: string): Promise<IndexDetails | null> {
     try {
-        const data = await fetchJson<any[]>(`indices/${code}.json`)
+        const module = await import(`@/public/data/indices/${code}.json`)
+        const data = module.default as any[]
+
         if (!data || data.length === 0) return null
 
         // Sort by date ascending for history
@@ -204,17 +196,6 @@ export async function getIndexDetails(code: string): Promise<IndexDetails | null
 
         const change = latest.value - prev.value
         const changePercent = prev.value !== 0 ? (change / prev.value) * 100 : 0
-
-        // Ranges
-        // Day Range is tricky with 1 data point per day. Google Finance shows Day Range for *today's* trading.
-        // We only have closing prices usually. If we have High/Low in the scraper, we use that.
-        // We don't have High/Low for indices yet, mostly just Value (which acts as Close).
-        // So Day Range might be just the current value or N/A. 
-        // Let's assume N/A or just show current.
-        // To be helpful, we can just say "Day Range" is "value - value" if single point, not great.
-        // Or if we check the *current* scraper, does it return High/Low?
-        // The robust scraper found "Value", "Change %". No High/Low.
-        // So Day Range will be null for now.
 
         // 52 Week Range
         const oneYearAgo = new Date();
@@ -250,10 +231,13 @@ export async function getIndexDetails(code: string): Promise<IndexDetails | null
 
 export async function getMarketIndices(): Promise<MarketIndex[]> {
     try {
-        const [mbi10Data, ombData] = await Promise.all([
-            fetchJson<any[]>('indices/MBI10.json'),
-            fetchJson<any[]>('indices/OMB.json')
+        const [mbi10Module, ombModule] = await Promise.all([
+            import('@/public/data/indices/MBI10.json'),
+            import('@/public/data/indices/OMB.json')
         ])
+
+        const mbi10Data = mbi10Module.default as any[]
+        const ombData = ombModule.default as any[]
 
         const indices: MarketIndex[] = []
 
@@ -303,6 +287,7 @@ export async function getLatestNews(limit: number = 6): Promise<NewsItem[]> {
             if (issuer.reportLinks) {
                 issuer.reportLinks.forEach((report: any, index: number) => {
                     const date = parseDateFromTitle(report.title, report.date)
+                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                     const titleClean = report.title.replace(/^\d{1,2}\/\d{1,2}\/\d{4}\s-\s/, '').split(' - ')[1] || report.title
 
                     allReports.push({
