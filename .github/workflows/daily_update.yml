@@ -2,8 +2,7 @@
 name: Daily Stock Update v2
 
 on:
-  push:
-    branches: ["master", "main"]
+
   schedule:
     # Runs at 02:00 UTC (04:00 Macedonia)
     - cron: '0 2 * * *'
