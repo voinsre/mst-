@@ -4,7 +4,7 @@ import path from 'path';
 import * as cheerio from 'cheerio';
 
 const BASE_URL = 'https://www.mse.mk/mk/stats/symbolhistory/';
-const DATA_DIR = path.join(process.cwd(), 'public', 'data', 'stocks');
+const DATA_DIR = path.join(process.cwd(), 'lib', 'data', 'stocks');
 
 // Reusing helper functions (in a real app, extract to utils)
 function parseNumber(str: string): number {

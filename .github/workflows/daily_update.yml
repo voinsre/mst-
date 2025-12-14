@@ -47,10 +47,10 @@ jobs:
         # Check status relative to root or inside talir?
         # git status works from anywhere in the tree usually.
         
-        if [[ -n $(git status --porcelain) ]]; then
+        if [[ -n $(git status --porcelain lib/data) ]]; then
           echo "New data found, committing..."
           # The paths will be relative to root now: talir/public/data/...
-          git add public/data/stocks/*.json
+          git add lib/data
           git commit -m "chore: daily data refresh [skip ci]"
           git push
         else

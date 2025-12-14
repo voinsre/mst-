@@ -8,7 +8,7 @@ const INDICES = [
     { code: 'OMB', url: 'https://www.mse.mk/en/indicies/OMB/values' }
 ];
 
-const DATA_DIR = path.join(process.cwd(), 'public', 'data', 'indices');
+const DATA_DIR = path.join(process.cwd(), 'lib', 'data', 'indices');
 
 async function scrapeIndex(indexCode: string, url: string) {
     console.log(`Starting available scrape for ${indexCode} at ${url}...`);
