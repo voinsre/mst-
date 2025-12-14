@@ -1,0 +1,6 @@
+{
+    "buildCommand": "cd talir && npm run build",
+    "outputDirectory": "talir/.next",
+    "installCommand": "cd talir && npm install",
+    "framework": "nextjs"
+}

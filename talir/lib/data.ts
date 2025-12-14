@@ -11,7 +11,7 @@ import { StockData, StockSummary, DailyPrice, MarketIndex } from './types'
 export type { StockData, StockSummary, DailyPrice, MarketIndex }
 import { transliterate } from './transliterate'
 
-// Static Data Imports (Bundled)
+// Static Data Imports (Bundled) - Using @/lib/data guaranteed to be in the build
 import marketSummaryData from '@/lib/data/market_summary.json'
 import issuersData from '@/lib/data/issuers.json'
 
@@ -79,7 +79,8 @@ async function getIssuers(): Promise<any[]> {
 export async function getStock(code: string): Promise<StockData | null> {
     try {
         const [stockModule, issuers] = await Promise.all([
-            import(`@/public/data/stocks/${code}.json`),
+            // Use dynamic import from lib/data (source code) so webpack bundles it
+            import(`@/lib/data/stocks/${code}.json`),
             getIssuers()
         ]);
 
@@ -184,7 +185,7 @@ export interface IndexDetails {
 
 export async function getIndexDetails(code: string): Promise<IndexDetails | null> {
     try {
-        const module = await import(`@/public/data/indices/${code}.json`)
+        const module = await import(`@/lib/data/indices/${code}.json`)
         const data = module.default as any[]
 
         if (!data || data.length === 0) return null
@@ -233,8 +234,8 @@ export async function getIndexDetails(code: string): Promise<IndexDetails | null
 export async function getMarketIndices(): Promise<MarketIndex[]> {
     try {
         const [mbi10Module, ombModule] = await Promise.all([
-            import('@/public/data/indices/MBI10.json'),
-            import('@/public/data/indices/OMB.json')
+            import('@/lib/data/indices/MBI10.json'),
+            import('@/lib/data/indices/OMB.json')
         ])
 
         const mbi10Data = mbi10Module.default as any[]
