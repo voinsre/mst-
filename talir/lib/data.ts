@@ -11,6 +11,10 @@ import { StockData, StockSummary, DailyPrice, MarketIndex } from './types'
 export type { StockData, StockSummary, DailyPrice, MarketIndex }
 import { transliterate } from './transliterate'
 
+// Static Data Imports (Bundled)
+import marketSummaryData from '@/lib/data/market_summary.json'
+import issuersData from '@/lib/data/issuers.json'
+
 // Unified fetcher for both stocks and indices
 export async function getAllInstruments(): Promise<StockSummary[]> {
     const [stocks, indices] = await Promise.all([
@@ -36,9 +40,7 @@ export async function getAllInstruments(): Promise<StockSummary[]> {
 // Fetch all stocks summary
 export async function getAllStocks(): Promise<StockSummary[]> {
     try {
-        // Use dynamic import which works better in Serverless than fs
-        const module = await import('@/public/data/market_summary.json')
-        const data = module.default as any[]
+        const data = marketSummaryData as any[]
 
         if (!data) return []
 
@@ -65,8 +67,7 @@ let issuersCache: any[] | null = null;
 async function getIssuers(): Promise<any[]> {
     if (issuersCache) return issuersCache;
     try {
-        const module = await import('@/public/data/issuers.json');
-        issuersCache = module.default as any[] || [];
+        issuersCache = issuersData as any[] || [];
         return issuersCache;
     } catch (e) {
         console.error("Error loading issuers", e);
