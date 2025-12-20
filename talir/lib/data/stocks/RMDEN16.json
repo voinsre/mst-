@@ -21528,6 +21528,17 @@
       "quantity": 0,
       "turnover_best_mkd": 0,
       "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-12-19",
+      "last_transaction_price": 90,
+      "max_price": 90,
+      "min_price": 90,
+      "average_price": 90,
+      "percent_change": 0,
+      "quantity": 37,
+      "turnover_best_mkd": 2048,
+      "total_turnover_mkd": 2048
     }
   ]
 }
