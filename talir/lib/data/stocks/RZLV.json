@@ -62910,6 +62910,17 @@
       "quantity": 0,
       "turnover_best_mkd": 0,
       "total_turnover_mkd": 0
+    },
+    {
+      "date": "2025-12-25",
+      "last_transaction_price": 6,
+      "max_price": 6,
+      "min_price": 6,
+      "average_price": 6,
+      "percent_change": -40,
+      "quantity": 3300,
+      "turnover_best_mkd": 19800,
+      "total_turnover_mkd": 19800
     }
   ]
 }
